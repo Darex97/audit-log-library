@@ -15,7 +15,7 @@
   "keywords": ["audit", "logging", "browser", "excel", "xlsx"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Darex97/audit-log-library"
+    "url": "https://github.com/Darex97/audit-log-library/tree/main/packages/audit-log-lib"
   },
   "engines": {
     "browser": "true"
