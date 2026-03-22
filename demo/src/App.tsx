@@ -1,8 +1,9 @@
 import './App.css';
 import { useState, useEffect } from 'react';
-import { AuditLog } from 'audit-log-lib';
+import { AuditLog, setupGlobalLogging } from 'audit-log-lib';
 
 const audit = new AuditLog({ maxDays: 7, maxEntries: 10 }); // primer maxEntries za test
+setupGlobalLogging(audit);
 
 function App() {
   const [logs, setLogs] = useState<any[]>([]);

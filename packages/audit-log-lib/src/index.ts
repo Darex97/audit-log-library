@@ -1,6 +1,7 @@
 import { AuditLogStorage } from './storage';
-import type { AuditLogEntry, AuditLogOptions } from './types';
+import type { AuditLogEntry, AuditLogOptions, LogLevel } from './types';
 import { pruneOldLogs, downloadLogs, checkStorageLimit } from './utils';
+export { setupGlobalLogging } from './logging';
 
 export class AuditLog {
   private storage: AuditLogStorage;
@@ -14,17 +15,17 @@ export class AuditLog {
     this.storage.init().catch(console.error);
   }
 
-  async log(action: string, payload: any) {
+  async log(action: string, payload: any, level: LogLevel = 'info', context?: any) {
     let logs = await this.storage.getAll();
-    logs = pruneOldLogs(logs, this.maxDays);
+  logs = pruneOldLogs(logs, this.maxDays);
 
-    const shouldClear = await checkStorageLimit(logs, this.maxEntries);
-    if (shouldClear) {
-      await this.storage.clearAll();
-      logs = [];
-    }
+  const shouldClear = await checkStorageLimit(logs, this.maxEntries);
+  if (shouldClear) {
+    await this.storage.clearAll();
+    logs = [];
+  }
 
-    await this.storage.log({ action, payload });
+  await this.storage.log({ action, payload, level, context });
   }
 
   async getLogs(): Promise<AuditLogEntry[]> {
