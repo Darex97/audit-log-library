@@ -52,4 +52,14 @@ export class AuditLogStorage {
       request.onerror = () => reject(request.error);
     });
   }
+
+  clearAll(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.db) return reject('DB not initialized');
+      const tx = this.db.transaction(this.storeName, 'readwrite');
+      tx.objectStore(this.storeName).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
 }
