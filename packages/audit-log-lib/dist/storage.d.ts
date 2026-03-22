@@ -8,5 +8,6 @@ export declare class AuditLogStorage {
     log(entry: AuditLogEntry): Promise<void>;
     getAll(): Promise<AuditLogEntry[]>;
     clearAll(): Promise<void>;
+    logRaw(entry: AuditLogEntry): Promise<void>;
 }
 //# sourceMappingURL=storage.d.ts.map

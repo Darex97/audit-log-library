@@ -14,6 +14,7 @@ export interface AuditLogOptions {
   storeName?: string;
   maxDays?: number;
   maxEntries?: number;
+  onStorageFull?: (logs: AuditLogEntry[]) => Promise<void>;
 }
 
 export type DownloadFormat = 'json' | 'excel' | 'both';

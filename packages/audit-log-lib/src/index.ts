@@ -1,31 +1,48 @@
 import { AuditLogStorage } from './storage';
 import type { AuditLogEntry, AuditLogOptions, LogLevel } from './types';
-import { pruneOldLogs, downloadLogs, checkStorageLimit } from './utils';
+import { pruneOldLogs, downloadLogs } from './utils';
 export { setupGlobalLogging } from './logging';
 
 export class AuditLog {
   private storage: AuditLogStorage;
   private maxDays: number = 7;
   private maxEntries: number = 5000;
+  private onStorageFull?: (logs: AuditLogEntry[]) => Promise<void>;
+  private pruneInterval: ReturnType<typeof setInterval>;
 
   constructor(options?: AuditLogOptions) {
     this.storage = new AuditLogStorage(options);
     this.maxDays = options?.maxDays ?? 7;
     this.maxEntries = options?.maxEntries ?? 5000;
+    this.onStorageFull = options?.onStorageFull;
     this.storage.init().catch(console.error);
+    this.pruneInterval = setInterval(() => this.pruneIfNeeded(), 60_000);
+  }
+
+  private async pruneIfNeeded(): Promise<void> {
+    const logs = await this.storage.getAll();
+    const pruned = pruneOldLogs(logs, this.maxDays);
+    if (pruned.length < logs.length) {
+      await this.storage.clearAll();
+      await Promise.all(pruned.map(entry => this.storage.logRaw(entry)));
+    }
   }
 
   async log(action: string, payload: any, level: LogLevel = 'info', context?: any) {
-    let logs = await this.storage.getAll();
-  logs = pruneOldLogs(logs, this.maxDays);
+    const logs = await this.storage.getAll();
 
-  const shouldClear = await checkStorageLimit(logs, this.maxEntries);
-  if (shouldClear) {
-    await this.storage.clearAll();
-    logs = [];
+    if (logs.length >= this.maxEntries) {
+      if (this.onStorageFull) {
+        await this.onStorageFull(logs);
+      }
+      await this.storage.clearAll();
+    }
+
+    await this.storage.log({ action, payload, level, context });
   }
 
-  await this.storage.log({ action, payload, level, context });
+  destroy() {
+    clearInterval(this.pruneInterval);
   }
 
   async getLogs(): Promise<AuditLogEntry[]> {

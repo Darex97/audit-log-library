@@ -55,7 +55,7 @@ function App() {
       </div>
 
       <h2>Logs (latest first):</h2>
-      {logs.length === 0 ? (
+      {logs.length === 0  ? (
         <p>No logs yet</p>
       ) : (
         <ul>

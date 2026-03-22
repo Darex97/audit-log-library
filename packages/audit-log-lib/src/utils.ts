@@ -16,7 +16,6 @@ function formatTimestamp(ts?: number | string) {
          `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
-
 // download logs as ZIP
 export async function downloadLogs(
   logs: AuditLogEntry[],
@@ -29,6 +28,7 @@ export async function downloadLogs(
     ...log,
     timestamp: formatTimestamp(log.timestamp)
   }));
+  if (readableLogs.length === 0) return;
 
   if (format === 'json') {
     const blob = new Blob([JSON.stringify(readableLogs, null, 2)], { type: 'application/json' });
@@ -59,15 +59,4 @@ export async function downloadLogs(
     const content = await zip.generateAsync({ type: 'blob' });
     saveAs(content, `audit-logs-${timestamp}.zip`);
   }
-}
-
-// check if storage limit exceeded
-export async function checkStorageLimit(logs: AuditLogEntry[], maxEntries: number) {
-  if (logs.length >= maxEntries) {
-    if (confirm("Audit logs are full. Do you want to download and clear them?")) {
-      await downloadLogs(logs);
-      return true; // treba obrisati logove
-    }
-  }
-  return false;
 }

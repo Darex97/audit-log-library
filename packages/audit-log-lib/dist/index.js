@@ -11,7 +11,7 @@ var r = class {
 			let n = indexedDB.open(this.dbName, 1);
 			n.onupgradeneeded = (e) => {
 				let t = e.target.result;
-				t.objectStoreNames.contains(this.storeName) || t.createObjectStore(this.storeName, { keyPath: "timestamp" });
+				t.objectStoreNames.contains(this.storeName) || t.createObjectStore(this.storeName, { autoIncrement: !0 });
 			}, n.onsuccess = (t) => {
 				this.db = t.target.result, e();
 			}, n.onerror = () => t(n.error);
@@ -41,6 +41,13 @@ var r = class {
 			n.objectStore(this.storeName).clear(), n.oncomplete = () => e(), n.onerror = () => t(n.error);
 		});
 	}
+	logRaw(e) {
+		return new Promise((t, n) => {
+			if (!this.db) return n("DB not initialized");
+			let r = this.db.transaction(this.storeName, "readwrite");
+			r.objectStore(this.storeName).add(e), r.oncomplete = () => t(), r.onerror = () => n(r.error);
+		});
+	}
 };
 //#endregion
 //#region src/utils.ts
@@ -57,33 +64,32 @@ async function o(r, i = "json") {
 		...e,
 		timestamp: a(e.timestamp)
 	}));
-	if (i === "json") t(new Blob([JSON.stringify(s, null, 2)], { type: "application/json" }), `audit-logs-${o}.json`);
-	else if (i === "excel") {
-		let e = new n.Workbook(), r = e.addWorksheet("Logs");
-		r.columns = Object.keys(s[0] || {}).map((e) => ({
-			header: e,
-			key: e
-		})), s.forEach((e) => r.addRow(e));
-		let i = await e.xlsx.writeBuffer();
-		t(new Blob([i], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `audit-logs-${o}.xlsx`);
-	} else if (i === "both") {
-		let r = new e();
-		r.file("audit-logs.json", JSON.stringify(s, null, 2));
-		let i = new n.Workbook(), a = i.addWorksheet("Logs");
-		a.columns = Object.keys(s[0] || {}).map((e) => ({
-			header: e,
-			key: e
-		})), s.forEach((e) => a.addRow(e));
-		let c = await i.xlsx.writeBuffer();
-		r.file("audit-logs.xlsx", c), t(await r.generateAsync({ type: "blob" }), `audit-logs-${o}.zip`);
+	if (s.length !== 0) {
+		if (i === "json") t(new Blob([JSON.stringify(s, null, 2)], { type: "application/json" }), `audit-logs-${o}.json`);
+		else if (i === "excel") {
+			let e = new n.Workbook(), r = e.addWorksheet("Logs");
+			r.columns = Object.keys(s[0] || {}).map((e) => ({
+				header: e,
+				key: e
+			})), s.forEach((e) => r.addRow(e));
+			let i = await e.xlsx.writeBuffer();
+			t(new Blob([i], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `audit-logs-${o}.xlsx`);
+		} else if (i === "both") {
+			let r = new e();
+			r.file("audit-logs.json", JSON.stringify(s, null, 2));
+			let i = new n.Workbook(), a = i.addWorksheet("Logs");
+			a.columns = Object.keys(s[0] || {}).map((e) => ({
+				header: e,
+				key: e
+			})), s.forEach((e) => a.addRow(e));
+			let c = await i.xlsx.writeBuffer();
+			r.file("audit-logs.xlsx", c), t(await r.generateAsync({ type: "blob" }), `audit-logs-${o}.zip`);
+		}
 	}
-}
-async function s(e, t) {
-	return e.length >= t && confirm("Audit logs are full. Do you want to download and clear them?") ? (await o(e), !0) : !1;
 }
 //#endregion
 //#region src/logging.ts
-function c(e) {
+function s(e) {
 	[
 		"log",
 		"warn",
@@ -99,7 +105,7 @@ function c(e) {
 			});
 		};
 	}), window.onerror = (t, n, r, i, a) => {
-		let o = String(t) ?? "Unknown error", s = {
+		let o = t ? String(t) : "Unknown error", s = {
 			source: n,
 			lineno: r,
 			colno: i,
@@ -119,18 +125,25 @@ function c(e) {
 }
 //#endregion
 //#region src/index.ts
-var l = class {
+var c = class {
 	constructor(e) {
-		this.maxDays = 7, this.maxEntries = 5e3, this.storage = new r(e), this.maxDays = e?.maxDays ?? 7, this.maxEntries = e?.maxEntries ?? 5e3, this.storage.init().catch(console.error);
+		this.maxDays = 7, this.maxEntries = 5e3, this.storage = new r(e), this.maxDays = e?.maxDays ?? 7, this.maxEntries = e?.maxEntries ?? 5e3, this.onStorageFull = e?.onStorageFull, this.storage.init().catch(console.error), this.pruneInterval = setInterval(() => this.pruneIfNeeded(), 6e4);
+	}
+	async pruneIfNeeded() {
+		let e = await this.storage.getAll(), t = i(e, this.maxDays);
+		t.length < e.length && (await this.storage.clearAll(), await Promise.all(t.map((e) => this.storage.logRaw(e))));
 	}
 	async log(e, t, n = "info", r) {
-		let a = await this.storage.getAll();
-		a = i(a, this.maxDays), await s(a, this.maxEntries) && (await this.storage.clearAll(), a = []), await this.storage.log({
+		let i = await this.storage.getAll();
+		i.length >= this.maxEntries && (this.onStorageFull && await this.onStorageFull(i), await this.storage.clearAll()), await this.storage.log({
 			action: e,
 			payload: t,
 			level: n,
 			context: r
 		});
+	}
+	destroy() {
+		clearInterval(this.pruneInterval);
 	}
 	async getLogs() {
 		return i(await this.storage.getAll(), this.maxDays);
@@ -143,4 +156,4 @@ var l = class {
 	}
 };
 //#endregion
-export { l as AuditLog, c as setupGlobalLogging };
+export { c as AuditLog, s as setupGlobalLogging };

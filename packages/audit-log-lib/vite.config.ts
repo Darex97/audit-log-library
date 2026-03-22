@@ -11,6 +11,13 @@ export default defineConfig({
     },
     rollupOptions: {
       external: ['exceljs', 'jszip', 'file-saver'],
+      output: {
+        globals: {
+          'exceljs': 'ExcelJS',
+          'jszip': 'JSZip',
+          'file-saver': 'saveAs'
+        }
+      },
     },
     outDir: 'dist',
     emptyOutDir: false

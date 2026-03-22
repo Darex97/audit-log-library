@@ -25,7 +25,7 @@ export function setupGlobalLogging(logger: AuditLog) {
   });
 
   window.onerror = (message, source, lineno, colno, error) => {
-    const action = String(message) ?? 'Unknown error';
+    const action = message ? String(message) : 'Unknown error';
     const payload = {
       source,
       lineno,

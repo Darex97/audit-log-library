@@ -17,7 +17,7 @@ export class AuditLogStorage {
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
         if (!db.objectStoreNames.contains(this.storeName)) {
-          db.createObjectStore(this.storeName, { keyPath: 'timestamp' });
+          db.createObjectStore(this.storeName, { autoIncrement: true });
         }
       };
 
@@ -62,4 +62,14 @@ export class AuditLogStorage {
       tx.onerror = () => reject(tx.error);
     });
   }
+
+  logRaw(entry: AuditLogEntry): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (!this.db) return reject('DB not initialized');
+    const tx = this.db.transaction(this.storeName, 'readwrite');
+    tx.objectStore(this.storeName).add(entry); // no timestamp override
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
 }
