@@ -67,7 +67,7 @@ export class AuditLogStorage {
   return new Promise((resolve, reject) => {
     if (!this.db) return reject('DB not initialized');
     const tx = this.db.transaction(this.storeName, 'readwrite');
-    tx.objectStore(this.storeName).add(entry); // no timestamp override
+    tx.objectStore(this.storeName).add(entry);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });

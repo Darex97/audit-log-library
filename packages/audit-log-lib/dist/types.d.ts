@@ -7,6 +7,9 @@ export interface AuditLogEntry {
     level?: LogLevel;
     context?: any;
 }
+export type ReadableLogEntry = Omit<AuditLogEntry, 'timestamp'> & {
+    timestamp: string;
+};
 export interface AuditLogOptions {
     dbName?: string;
     storeName?: string;

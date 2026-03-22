@@ -59,37 +59,78 @@ function a(e) {
 	let t = e ? new Date(e) : /* @__PURE__ */ new Date(), n = (e) => e.toString().padStart(2, "0");
 	return `${t.getFullYear()}-${n(t.getMonth() + 1)}-${n(t.getDate())} ${n(t.getHours())}:${n(t.getMinutes())}:${n(t.getSeconds())}`;
 }
-async function o(r, i = "json") {
-	let o = (/* @__PURE__ */ new Date()).toISOString(), s = r.map((e) => ({
+async function o(e) {
+	let t = new n.Workbook(), r = t.addWorksheet("Logs");
+	r.columns = Object.keys(e[0]).map((e) => ({
+		header: e,
+		key: e
+	})), r.columns.forEach((e) => {
+		let t = e.header ? e.header.length : 10;
+		r.getColumn(e.key).eachCell({ includeEmpty: !1 }, (e) => {
+			let n = e.value ? e.value.toString().length : 0;
+			n > t && (t = n);
+		}), e.width = t + 4;
+	}), r.getRow(1).eachCell((e) => {
+		e.font = {
+			bold: !0,
+			color: { argb: "FFFFFFFF" }
+		}, e.fill = {
+			type: "pattern",
+			pattern: "solid",
+			fgColor: { argb: "FF2C2C2A" }
+		};
+	});
+	let i = {
+		info: {
+			bg: "FFE6F1FB",
+			font: "FF0C447C"
+		},
+		warn: {
+			bg: "FFFAEEDA",
+			font: "FF633806"
+		},
+		error: {
+			bg: "FFFCEBEB",
+			font: "FF791F1F"
+		},
+		debug: {
+			bg: "FFE1F5EE",
+			font: "FF085041"
+		}
+	};
+	return e.forEach((e) => {
+		let t = r.addRow(e), n = i[e.level ?? "info"];
+		t.eachCell((e) => {
+			e.fill = {
+				type: "pattern",
+				pattern: "solid",
+				fgColor: { argb: n.bg }
+			}, e.font = { color: { argb: n.font } };
+		});
+	}), t.xlsx.writeBuffer();
+}
+function s(e) {
+	return {
 		...e,
 		timestamp: a(e.timestamp)
-	}));
-	if (s.length !== 0) {
-		if (i === "json") t(new Blob([JSON.stringify(s, null, 2)], { type: "application/json" }), `audit-logs-${o}.json`);
-		else if (i === "excel") {
-			let e = new n.Workbook(), r = e.addWorksheet("Logs");
-			r.columns = Object.keys(s[0] || {}).map((e) => ({
-				header: e,
-				key: e
-			})), s.forEach((e) => r.addRow(e));
-			let i = await e.xlsx.writeBuffer();
-			t(new Blob([i], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `audit-logs-${o}.xlsx`);
-		} else if (i === "both") {
-			let r = new e();
-			r.file("audit-logs.json", JSON.stringify(s, null, 2));
-			let i = new n.Workbook(), a = i.addWorksheet("Logs");
-			a.columns = Object.keys(s[0] || {}).map((e) => ({
-				header: e,
-				key: e
-			})), s.forEach((e) => a.addRow(e));
-			let c = await i.xlsx.writeBuffer();
-			r.file("audit-logs.xlsx", c), t(await r.generateAsync({ type: "blob" }), `audit-logs-${o}.zip`);
+	};
+}
+async function c(n, r = "json") {
+	let i = (/* @__PURE__ */ new Date()).toISOString(), a = n.map(s);
+	if (a.length !== 0) {
+		if (r === "json") t(new Blob([JSON.stringify(a, null, 2)], { type: "application/json" }), `audit-logs-${i}.json`);
+		else if (r === "excel") {
+			let e = await o(a);
+			t(new Blob([e], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `audit-logs-${i}.xlsx`);
+		} else if (r === "both") {
+			let n = new e();
+			n.file("audit-logs.json", JSON.stringify(a, null, 2)), n.file("audit-logs.xlsx", await o(a)), t(await n.generateAsync({ type: "blob" }), `audit-logs-${i}.zip`);
 		}
 	}
 }
 //#endregion
 //#region src/logging.ts
-function s(e) {
+function l(e) {
 	[
 		"log",
 		"warn",
@@ -125,7 +166,7 @@ function s(e) {
 }
 //#endregion
 //#region src/index.ts
-var c = class {
+var u = class {
 	constructor(e) {
 		this.maxDays = 7, this.maxEntries = 5e3, this.storage = new r(e), this.maxDays = e?.maxDays ?? 7, this.maxEntries = e?.maxEntries ?? 5e3, this.onStorageFull = e?.onStorageFull, this.storage.init().catch(console.error), this.pruneInterval = setInterval(() => this.pruneIfNeeded(), 6e4);
 	}
@@ -149,11 +190,11 @@ var c = class {
 		return i(await this.storage.getAll(), this.maxDays);
 	}
 	async downloadLogs(e = "json") {
-		await o(await this.getLogs(), e);
+		await c(await this.getLogs(), e);
 	}
 	async clearLogs() {
 		await this.storage.clearAll();
 	}
 };
 //#endregion
-export { c as AuditLog, s as setupGlobalLogging };
+export { u as AuditLog, l as setupGlobalLogging };
