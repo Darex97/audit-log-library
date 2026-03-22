@@ -1,9 +1,9 @@
 {
   "name": "audit-log-lib",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "main": "dist/index.umd.js",
   "module": "dist/index.js",
-  "types": "src/index.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -12,19 +12,20 @@
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "author": "Darex97",
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
     "@types/node": "^25.5.0",
     "@types/xlsx": "^0.0.35",
     "typescript": "^5.9.3",
-    "vite": "^8.0.1"
+    "vite": "^8.0.1",
+    "vite-plugin-dts": "^4.5.4"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1"
-  }
+  },
+  "license": "MIT",
+  "description": "Browser-based audit logging library"
 }

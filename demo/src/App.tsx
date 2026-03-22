@@ -2,7 +2,7 @@ import './App.css';
 import { useState, useEffect } from 'react';
 import { AuditLog, setupGlobalLogging } from 'audit-log-lib';
 
-const audit = new AuditLog({ maxDays: 7, maxEntries: 10 }); // primer maxEntries za test
+const audit = new AuditLog({ maxDays: 7, maxEntries: 10 });
 setupGlobalLogging(audit);
 
 function App() {

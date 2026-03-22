@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",                // JS verzija izlaznog koda
+    "module": "ESNext",                // ES module
+    "moduleResolution": "Node",
+    "declaration": true,               // generiše .d.ts fajlove
+    "declarationMap": true,            // mapa za TS deklaracije
+    "outDir": "dist",                  // izlazni folder
+    "rootDir": "src",                  // folder sa TS fajlovima
+    "strict": true,                     // striktne TS provere
+    "esModuleInterop": true,            // import commonjs modula
+    "skipLibCheck": true                // preskoči proveru tipova u node_modules
+  },
+  "include": ["src"]
+}
