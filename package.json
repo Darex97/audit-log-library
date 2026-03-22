@@ -1,0 +1,8 @@
+{
+  "name": "audit-log-lib",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "demo"
+  ]
+}

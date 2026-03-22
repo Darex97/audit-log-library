@@ -1,0 +1,20 @@
+{
+  "name": "audit-log-lib",
+  "version": "1.0.0",
+  "main": "dist/index.umd.js",
+  "module": "dist/index.js",
+  "types": "src/index.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "vite build",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^8.0.1"
+  }
+}

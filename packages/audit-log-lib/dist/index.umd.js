@@ -1,0 +1,1 @@
+(function(e,t){typeof exports==`object`&&typeof module<`u`?t(exports):typeof define==`function`&&define.amd?define([`exports`],t):(e=typeof globalThis<`u`?globalThis:e||self,t(e.AuditLog={}))})(this,function(e){Object.defineProperty(e,Symbol.toStringTag,{value:`Module`});function t(e,t){console.log(`[AuditLog]`,e,t)}e.logAction=t});
