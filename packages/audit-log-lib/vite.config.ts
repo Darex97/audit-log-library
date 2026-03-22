@@ -6,7 +6,8 @@ export default defineConfig({
     lib: {
       entry: 'src/index.ts',
       name: 'AuditLogLib',
-      fileName: (format) => `index.${format}.js`
+      formats: ['es', 'umd'],
+      fileName: (format) => format === 'umd' ? 'index.umd.js' : 'index.js'
     },
     rollupOptions: {
       external: ['exceljs', 'jszip', 'file-saver'],

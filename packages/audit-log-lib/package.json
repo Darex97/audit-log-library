@@ -4,19 +4,25 @@
   "main": "dist/index.umd.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "vite build",
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist"
   },
-  "keywords": [],
   "author": "Darex97",
+  "license": "MIT",
+  "description": "Browser-based audit logging library",
+  "keywords": ["audit", "logging", "browser", "excel", "xlsx"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Darex97/audit-log-library"
+  },
+  "engines": {
+    "browser": "true"
+  },
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
     "@types/node": "^25.5.0",
-    "@types/xlsx": "^0.0.35",
     "typescript": "^5.9.3",
     "vite": "^8.0.1",
     "vite-plugin-dts": "^4.5.4"
@@ -25,7 +31,5 @@
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1"
-  },
-  "license": "MIT",
-  "description": "Browser-based audit logging library"
+  }
 }
