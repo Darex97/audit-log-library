@@ -11,7 +11,7 @@ setupGlobalLogging(audit);
 function App() {
   const [logs, setLogs] = useState<any[]>([]);
 
-  // učitaj logove pri startu
+  // get logs on load
   const refreshLogs = async () => {
     const allLogs = await audit.getLogs();
     setLogs(allLogs);
@@ -21,18 +21,18 @@ function App() {
     refreshLogs();
   }, []);
 
-  // funkcija za log dugme
+  // function for log button
   const handleClick = async (buttonName: string) => {
     await audit.log("CLICK", { button: buttonName });
     await refreshLogs();
   };
 
-  // dugme za download logova
+  // button for logs download
   const handleDownload = async () => {
     await audit.downloadLogs('both');
   };
 
-  // dugme za clear logova
+  // button for clearing logs 
   const handleClear = async () => {
     await audit.clearLogs();
     await refreshLogs();
