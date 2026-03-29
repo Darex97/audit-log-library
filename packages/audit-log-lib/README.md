@@ -230,6 +230,14 @@ const audit = new AuditLog({
 
 Requires IndexedDB support. Works in all modern browsers (Chrome, Firefox, Edge, Safari).
 
+## Dependencies
+
+This project uses:
+
+- exceljs (MIT License)
+- file-saver (MIT License)
+- jszip (MIT License)
+
 ## License
 
 Apache 2.0 — see [LICENSE](./LICENSE) for details.

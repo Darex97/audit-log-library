@@ -4,6 +4,13 @@
   "main": "dist/index.umd.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": ["dist", "LICENSE", "README.md"],
   "scripts": {
     "build": "vite build",
@@ -18,7 +25,10 @@
     "type": "git",
     "url": "https://github.com/Darex97/audit-log-library/tree/main/packages/audit-log-lib"
   },
-  "homepage": "https://github.com/Darex97/audit-log-library",
+  "bugs": {
+    "url": "https://github.com/Darex97/audit-log-library/issues"
+  },
+  "homepage": "https://github.com/Darex97/audit-log-library/blob/main/packages/audit-log-lib/README.md",
   "engines": {
     "browser": "true"
   },
