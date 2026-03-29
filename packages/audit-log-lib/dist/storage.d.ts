@@ -1,4 +1,4 @@
-import { AuditLogEntry, AuditLogOptions } from './types';
+import type { AuditLogEntry, AuditLogOptions } from './types';
 export declare class AuditLogStorage {
     private db;
     private dbName;

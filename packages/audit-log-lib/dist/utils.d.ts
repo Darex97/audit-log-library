@@ -1,4 +1,4 @@
-import { AuditLogEntry, DownloadFormat } from './types';
+import type { AuditLogEntry, DownloadFormat } from "./types";
 export declare function pruneOldLogs(logs: AuditLogEntry[], maxDays: number): AuditLogEntry[];
 export declare function downloadLogs(logs: AuditLogEntry[], format?: DownloadFormat): Promise<void>;
 //# sourceMappingURL=utils.d.ts.map

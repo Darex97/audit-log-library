@@ -64,13 +64,7 @@ async function o(e) {
 	r.columns = Object.keys(e[0]).map((e) => ({
 		header: e,
 		key: e
-	})), r.columns.forEach((e) => {
-		let t = e.header ? e.header.length * 6 : 10;
-		r.getColumn(e.key).eachCell({ includeEmpty: !1 }, (e) => {
-			let n = e.value ? e.value.toString().length : 0;
-			n > t && (t = n);
-		}), e.width = t + 4;
-	}), r.getRow(1).eachCell((e) => {
+	})), r.getRow(1).eachCell((e) => {
 		e.font = {
 			bold: !0,
 			color: { argb: "FFFFFFFF" }
@@ -99,14 +93,24 @@ async function o(e) {
 		}
 	};
 	return e.forEach((e) => {
-		let t = r.addRow(e), n = i[e.level ?? "info"];
-		t.eachCell((e) => {
+		let t = {
+			...e,
+			payload: typeof e.payload == "object" ? JSON.stringify(e.payload) : e.payload,
+			context: typeof e.context == "object" ? JSON.stringify(e.context) : e.context
+		}, n = r.addRow(t), a = i[e.level ?? "info"];
+		n.eachCell((e) => {
 			e.fill = {
 				type: "pattern",
 				pattern: "solid",
-				fgColor: { argb: n.bg }
-			}, e.font = { color: { argb: n.font } };
+				fgColor: { argb: a.bg }
+			}, e.font = { color: { argb: a.font } };
 		});
+	}), r.columns.forEach((e) => {
+		let t = e.header ? e.header.length * 1.5 : 10;
+		r.getColumn(e.key).eachCell({ includeEmpty: !1 }, (e) => {
+			let n = e.value ? e.value.toString().length : 0;
+			n > t && (t = n);
+		}), e.width = t + 4;
 	}), t.xlsx.writeBuffer();
 }
 function s(e) {
@@ -185,7 +189,13 @@ var u = class {
 			level: n,
 			context: r
 		};
-		await this.storage.log(i), this.onLog && await this.onLog(i).catch(console.error);
+		await this.storage.log(i), this.onLog && await this.onLog(i).catch(async (e) => {
+			await this.storage.log({
+				action: "onLog.failed",
+				payload: { error: e?.message },
+				level: "error"
+			});
+		});
 	}
 	destroy() {
 		clearInterval(this.pruneInterval);

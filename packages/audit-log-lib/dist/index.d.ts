@@ -1,5 +1,5 @@
-import { AuditLogEntry, AuditLogOptions, LogLevel } from './types';
-export { setupGlobalLogging } from './logging';
+import type { AuditLogEntry, AuditLogOptions, LogLevel } from "./types";
+export { setupGlobalLogging } from "./logging";
 export declare class AuditLog {
     private storage;
     private maxDays;
