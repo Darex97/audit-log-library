@@ -4,7 +4,6 @@ export interface AuditLogEntry {
   action: string;
   payload: any;
   timestamp?: number;
-  hash?: string;
   level?: LogLevel;     
   context?: any;          
 }

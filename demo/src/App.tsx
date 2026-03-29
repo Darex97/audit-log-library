@@ -2,7 +2,10 @@ import './App.css';
 import { useState, useEffect } from 'react';
 import { AuditLog, setupGlobalLogging } from 'audit-log-lib';
 
-const audit = new AuditLog({ maxDays: 7, maxEntries: 10 });
+const audit = new AuditLog({ maxDays: 7, maxEntries: 55000, onStorageFull: async () => {
+    // Auto-download before clearing
+    await audit.downloadLogs('json');
+  } });
 setupGlobalLogging(audit);
 
 function App() {
