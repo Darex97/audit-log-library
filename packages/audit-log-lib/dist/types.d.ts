@@ -3,7 +3,6 @@ export interface AuditLogEntry {
     action: string;
     payload: any;
     timestamp?: number;
-    hash?: string;
     level?: LogLevel;
     context?: any;
 }
@@ -16,6 +15,7 @@ export interface AuditLogOptions {
     maxDays?: number;
     maxEntries?: number;
     onStorageFull?: (logs: AuditLogEntry[]) => Promise<void>;
+    onLog?: (entry: AuditLogEntry) => Promise<void>;
 }
 export type DownloadFormat = 'json' | 'excel' | 'both';
 //# sourceMappingURL=types.d.ts.map

@@ -65,7 +65,7 @@ async function o(e) {
 		header: e,
 		key: e
 	})), r.columns.forEach((e) => {
-		let t = e.header ? e.header.length : 10;
+		let t = e.header ? e.header.length * 6 : 10;
 		r.getColumn(e.key).eachCell({ includeEmpty: !1 }, (e) => {
 			let n = e.value ? e.value.toString().length : 0;
 			n > t && (t = n);
@@ -168,20 +168,24 @@ function l(e) {
 //#region src/index.ts
 var u = class {
 	constructor(e) {
-		this.maxDays = 7, this.maxEntries = 5e3, this.storage = new r(e), this.maxDays = e?.maxDays ?? 7, this.maxEntries = e?.maxEntries ?? 5e3, this.onStorageFull = e?.onStorageFull, this.storage.init().catch(console.error), this.pruneInterval = setInterval(() => this.pruneIfNeeded(), 6e4);
+		this.storage = new r(e), this.maxDays = e?.maxDays ?? 30, this.maxEntries = e?.maxEntries, this.onStorageFull = e?.onStorageFull, this.onLog = e?.onLog, this.storage.init().catch(console.error), this.pruneInterval = setInterval(() => this.pruneIfNeeded(), 1440 * 60 * 1e3);
 	}
 	async pruneIfNeeded() {
 		let e = await this.storage.getAll(), t = i(e, this.maxDays);
 		t.length < e.length && (await this.storage.clearAll(), await Promise.all(t.map((e) => this.storage.logRaw(e))));
 	}
 	async log(e, t, n = "info", r) {
-		let i = await this.storage.getAll();
-		i.length >= this.maxEntries && (this.onStorageFull && await this.onStorageFull(i), await this.storage.clearAll()), await this.storage.log({
+		if (this.maxEntries !== void 0) {
+			let e = await this.storage.getAll();
+			e.length >= this.maxEntries && (this.onStorageFull && await this.onStorageFull(e), await this.storage.clearAll());
+		}
+		let i = {
 			action: e,
 			payload: t,
 			level: n,
 			context: r
-		});
+		};
+		await this.storage.log(i), this.onLog && await this.onLog(i).catch(console.error);
 	}
 	destroy() {
 		clearInterval(this.pruneInterval);

@@ -2,16 +2,26 @@ import './App.css';
 import { useState, useEffect } from 'react';
 import { AuditLog, setupGlobalLogging } from 'audit-log-lib';
 
-const audit = new AuditLog({ maxDays: 7, maxEntries: 55000, onStorageFull: async () => {
-    // Auto-download before clearing
+const audit = new AuditLog({
+  maxDays: 7,
+  maxEntries: 55000,
+  onStorageFull: async () => {
     await audit.downloadLogs('json');
-  } });
+  },
+  onLog: async (entry) => {
+    // Send each log to your backend as it's written
+    await fetch('https://your-api.com/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    });
+  }
+});
 setupGlobalLogging(audit);
 
 function App() {
   const [logs, setLogs] = useState<any[]>([]);
 
-  // get logs on load
   const refreshLogs = async () => {
     const allLogs = await audit.getLogs();
     setLogs(allLogs);
@@ -19,20 +29,18 @@ function App() {
 
   useEffect(() => {
     refreshLogs();
+    return () => audit.destroy();
   }, []);
 
-  // function for log button
   const handleClick = async (buttonName: string) => {
     await audit.log("CLICK", { button: buttonName });
     await refreshLogs();
   };
 
-  // button for logs download
   const handleDownload = async () => {
     await audit.downloadLogs('both');
   };
 
-  // button for clearing logs 
   const handleClear = async () => {
     await audit.clearLogs();
     await refreshLogs();
@@ -58,15 +66,15 @@ function App() {
       </div>
 
       <h2>Logs (latest first):</h2>
-      {logs.length === 0  ? (
+      {logs.length === 0 ? (
         <p>No logs yet</p>
       ) : (
         <ul>
           {logs
             .slice()
             .reverse()
-            .map((log) => (
-              <li key={log.timestamp}>
+            .map((log, index) => (
+              <li key={index}>
                 [{new Date(log.timestamp).toLocaleTimeString()}] {log.action} - {JSON.stringify(log.payload)}
               </li>
             ))}

@@ -8,6 +8,7 @@ export class AuditLog {
   private maxDays: number;
   private maxEntries?: number;
   private onStorageFull?: (logs: AuditLogEntry[]) => Promise<void>;
+  private onLog?: (entry: AuditLogEntry) => Promise<void>;
   private pruneInterval: ReturnType<typeof setInterval>;
 
   constructor(options?: AuditLogOptions) {
@@ -15,8 +16,12 @@ export class AuditLog {
     this.maxDays = options?.maxDays ?? 30;
     this.maxEntries = options?.maxEntries;
     this.onStorageFull = options?.onStorageFull;
+    this.onLog = options?.onLog;
     this.storage.init().catch(console.error);
-    this.pruneInterval = setInterval(() => this.pruneIfNeeded(), 24 * 60 * 60 * 1000);
+    this.pruneInterval = setInterval(
+      () => this.pruneIfNeeded(),
+      24 * 60 * 60 * 1000,
+    );
   }
 
   private async pruneIfNeeded(): Promise<void> {
@@ -44,7 +49,18 @@ export class AuditLog {
         await this.storage.clearAll();
       }
     }
-    await this.storage.log({ action, payload, level, context });
+    const entry: AuditLogEntry = { action, payload, level, context };
+    await this.storage.log(entry);
+
+    if (this.onLog) {
+      await this.onLog(entry).catch(async (error) => {
+        await this.storage.log({
+          action: "onLog.failed",
+          payload: { error: error?.message },
+          level: "error",
+        });
+      });
+    }
   }
 
   destroy() {

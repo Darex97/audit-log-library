@@ -9,7 +9,8 @@ A lightweight browser-based audit logging library with IndexedDB storage, Excel/
 - Export logs as JSON, Excel (.xlsx), or both in a ZIP
 - Excel rows color-coded by log level
 - Captures `console.log`, `console.warn`, `console.error`, and unhandled errors automatically
-- Optional storage limit with a custom `onStorageFull` callback - integrate with any backend, database, or service (Elasticsearch, REST API, etc.)
+- `onLog` hook — stream every log entry to a backend in real time
+- `onStorageFull` callback — flush logs to a backend, database, or any external service when storage limit is reached
 
 ## Installation
 
@@ -44,16 +45,17 @@ All options are optional.
 | `storeName` | `string` | `'logs'` | IndexedDB object store name |
 | `maxDays` | `number` | `30` | Prune logs older than this many days (runs every 24 hours) |
 | `maxEntries` | `number` | `undefined` | If set, triggers `onStorageFull` and clears storage when limit is reached. If not set, logs are never capped by count |
-| `onStorageFull` | `(logs: AuditLogEntry[]) => Promise<void>` | `undefined` | Called before clearing storage when `maxEntries` is reached. Use this to download or to flush logs to your backend, database, or any external service before local storage is cleared |
+| `onStorageFull` | `(logs: AuditLogEntry[]) => Promise<void>` | `undefined` | Called before clearing storage when `maxEntries` is reached. Use this to flush logs to your backend before local storage is cleared |
+| `onLog` | `(entry: AuditLogEntry) => Promise<void>` | `undefined` | Called after every log entry is written to IndexedDB. Use this to stream logs to a backend one by one in real time |
 
-### `logger.log(action, payload, level?, context?)`
+### `audit.log(action, payload, level?, context?)`
 
 Writes a log entry to IndexedDB.
 
 ```typescript
-await logger.log('user.login', { userId: 123 })                      // level defaults to 'info'
-await logger.log('api.error', { status: 500 }, 'error')
-await logger.log('form.submit', { form: 'checkout' }, 'info', { url: window.location.href })
+await audit.log('user.login', { userId: 123 })                       // level defaults to 'info'
+await audit.log('api.error', { status: 500 }, 'error')
+await audit.log('form.submit', { form: 'checkout' }, 'info', { url: window.location.href })
 ```
 
 | Parameter | Type | Default | Description |
@@ -63,22 +65,22 @@ await logger.log('form.submit', { form: 'checkout' }, 'info', { url: window.loca
 | `level` | `LogLevel` | `'info'` | One of `'info'`, `'warn'`, `'error'`, `'debug'` |
 | `context` | `any` | `undefined` | Optional extra context (e.g. current URL, user session) |
 
-### `logger.getLogs()`
+### `audit.getLogs()`
 
 Returns all logs from IndexedDB, filtered to exclude entries older than `maxDays`.
 
 ```typescript
-const logs = await logger.getLogs();
+const logs = await audit.getLogs();
 ```
 
-### `logger.downloadLogs(format?)`
+### `audit.downloadLogs(format?)`
 
 Downloads logs as a file.
 
 ```typescript
-await logger.downloadLogs('json')    // audit-logs-<timestamp>.json
-await logger.downloadLogs('excel')   // audit-logs-<timestamp>.xlsx
-await logger.downloadLogs('both')    // audit-logs-<timestamp>.zip (contains both)
+await audit.downloadLogs('json')    // audit-logs-<timestamp>.json
+await audit.downloadLogs('excel')   // audit-logs-<timestamp>.xlsx
+await audit.downloadLogs('both')    // audit-logs-<timestamp>.zip (contains both)
 ```
 
 | Format | Default |
@@ -87,35 +89,35 @@ await logger.downloadLogs('both')    // audit-logs-<timestamp>.zip (contains bot
 | `'excel'` | |
 | `'both'` | |
 
-### `logger.clearLogs()`
+### `audit.clearLogs()`
 
 Deletes all logs from IndexedDB.
 
 ```typescript
-await logger.clearLogs();
+await audit.clearLogs();
 ```
 
-### `logger.destroy()`
+### `audit.destroy()`
 
 Clears the internal pruning interval. Call this when your app or component unmounts.
 
 ```typescript
-logger.destroy();
+audit.destroy();
 ```
 
-### `setupGlobalLogging(logger)`
+### `setupGlobalLogging(audit)`
 
 Patches `console.log`, `console.warn`, and `console.error` to automatically write to the audit log. Also captures `window.onerror` and `window.onunhandledrejection`.
 
 ```typescript
 import { AuditLog, setupGlobalLogging } from 'audit-log-lib';
 
-const logger = new AuditLog();
-setupGlobalLogging(logger);
+const audit = new AuditLog();
+setupGlobalLogging(audit);
 
 // From this point on, all console output and uncaught errors are logged automatically
-console.log('hello');           // → level: info
-console.warn('watch out');      // → level: warn
+console.log('hello');            // → level: info
+console.warn('watch out');       // → level: warn
 console.error('something broke') // → level: error
 ```
 
@@ -148,29 +150,78 @@ interface AuditLogOptions {
   maxDays?: number;
   maxEntries?: number;
   onStorageFull?: (logs: AuditLogEntry[]) => Promise<void>;
+  onLog?: (entry: AuditLogEntry) => Promise<void>;
 }
 
 type DownloadFormat = 'json' | 'excel' | 'both';
 ```
 
-## Example with storage limit
+## Backend Integration
+
+### Stream every log to a backend in real time (`onLog`)
+
+Use `onLog` to send each log entry to your backend as soon as it is written. If the request fails, the error is silently caught so it never disrupts your app.
 
 ```typescript
-// With backend
 const audit = new AuditLog({
-  onStorageFull: async (logs) => {
+  onLog: async (entry) => {
     await fetch('https://your-api.com/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    });
+  }
+});
+```
+
+### Flush all logs when storage is full (`onStorageFull`)
+
+Use `onStorageFull` to send all accumulated logs to your backend before local storage is cleared.
+
+```typescript
+const audit = new AuditLog({
+  maxEntries: 10000,
+  onStorageFull: async (logs) => {
+    await fetch('https://your-api.com/api/logs/bulk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(logs)
     });
   }
 });
+```
 
-// Without backend — download instead
+### Without a backend — download instead
+
+```typescript
 const audit = new AuditLog({
-  onStorageFull: async (logs) => {
+  maxEntries: 10000,
+  onStorageFull: async () => {
     await audit.downloadLogs('json');
+  }
+});
+```
+
+### Using both hooks together
+
+```typescript
+const audit = new AuditLog({
+  maxEntries: 10000,
+  onLog: async (entry) => {
+    // Real-time streaming to backend
+    await fetch('https://your-api.com/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    });
+  },
+  onStorageFull: async (logs) => {
+    // Fallback bulk flush if real-time streaming fell behind
+    await fetch('https://your-api.com/api/logs/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(logs)
+    });
   }
 });
 ```
