@@ -10,7 +10,7 @@
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist"
   },
   "author": "Darex97",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "description": "Browser-based audit logging library",
   "keywords": ["audit", "logging", "browser", "excel", "xlsx"],
   "repository": {
